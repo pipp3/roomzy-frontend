@@ -3,7 +3,7 @@
 import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore } from '@/stores';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import Navbar from '@/components/layout/Navbar';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 const DashboardPage = () => {
   // 🎯 Selectores optimizados
@@ -16,10 +16,8 @@ const DashboardPage = () => {
 
   return (
     <ProtectedRoute requireEmailVerification={true}>
-      <div className="min-h-screen bg-slate-50">
-        <Navbar />
-        
-        <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <DashboardLayout>
+        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="px-4 py-6 sm:px-0">
             <div className="border-4 border-dashed border-slate-200 rounded-lg p-8">
@@ -247,8 +245,8 @@ const DashboardPage = () => {
               </div>
             </div>
           )}
-        </main>
-      </div>
+        </div>
+      </DashboardLayout>
     </ProtectedRoute>
   );
 };

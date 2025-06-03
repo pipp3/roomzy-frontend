@@ -17,5 +17,8 @@ export { default as ProtectedRoute } from './auth/ProtectedRoute';
 // Layout Components
 export { default as Navbar } from './layout/Navbar';
 
+// Profile Components
+export { default as ProfileView } from './profile/ProfileView';
+
 // Icons
 export * from './icons/AuthIcons'; 

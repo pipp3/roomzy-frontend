@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useShallow } from 'zustand/react/shallow';
@@ -17,6 +20,18 @@ import {
   LoadingButton,
   EmailIcon 
 } from '@/components';
+
+// Schema de validación con Zod
+const verifyEmailSchema = z.object({
+  code: z
+    .string()
+    .min(1, 'El código de verificación es requerido')
+    .length(6, 'El código debe tener exactamente 6 caracteres')
+    .regex(/^[A-Z0-9]{6}$/, 'El código debe contener solo letras mayúsculas y números')
+    .transform(val => val.toUpperCase()),
+});
+
+type VerifyEmailFormData = z.infer<typeof verifyEmailSchema>;
 
 const VerifyEmailPage = () => {
   const router = useRouter();
@@ -57,8 +72,20 @@ const VerifyEmailPage = () => {
     }))
   );
 
-  const [code, setCode] = useState('');
   const [message, setMessage] = useState('');
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+    setValue,
+  } = useForm<VerifyEmailFormData>({
+    resolver: zodResolver(verifyEmailSchema),
+    mode: 'onChange',
+  });
+
+  const codeValue = watch('code') || '';
 
   // Redirigir si no hay email pendiente
   useEffect(() => {
@@ -82,8 +109,7 @@ const VerifyEmailPage = () => {
     }
   }, [isAuthenticated, user, pendingVerificationEmail, requiresEmailVerification, router]);
 
-  const handleVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: VerifyEmailFormData) => {
     setMessage('');
 
     if (!pendingVerificationEmail) {
@@ -91,15 +117,10 @@ const VerifyEmailPage = () => {
       return;
     }
 
-    if (!code.trim()) {
-      toast.error('Ingresa el código de verificación');
-      return;
-    }
-
     try {
       const result = await verifyEmail({
         email: pendingVerificationEmail,
-        code: code.trim().toUpperCase(),
+        code: data.code,
       });
 
       if (result.success) {
@@ -167,6 +188,12 @@ const VerifyEmailPage = () => {
     router.push('/register');
   };
 
+  // Transformar input a mayúsculas automáticamente
+  const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.toUpperCase();
+    setValue('code', value, { shouldValidate: true });
+  };
+
   // No mostrar nada mientras se verifica la redirección
   if (!pendingVerificationEmail && !requiresEmailVerification) {
     return null;
@@ -191,30 +218,31 @@ const VerifyEmailPage = () => {
       <ErrorAlert error={error} />
 
       {/* Formulario de verificación */}
-      <form onSubmit={handleVerify} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           label="Código de verificación"
           htmlFor="code"
+          error={errors.code?.message}
           helpText="Ingresa el código de 6 caracteres que recibiste por email"
           required
         >
           <input
             id="code"
             type="text"
-            value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            {...register('code')}
+            onChange={handleCodeChange}
             className="w-full px-4 text-black py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors text-center text-lg tracking-widest font-mono"
             placeholder="ABCD12"
             maxLength={6}
-            required
             autoComplete="one-time-code"
+            disabled={isVerifyingEmail}
           />
         </FormField>
 
         <LoadingButton
           type="submit"
           isLoading={isVerifyingEmail}
-          disabled={!code.trim()}
+          disabled={!codeValue.trim()}
           loadingText="Verificando..."
         >
           Verificar Email

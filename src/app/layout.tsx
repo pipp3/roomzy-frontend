@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
+import AdminFloatingButton from "@/components/admin/AdminFloatingButton";
 import "./globals.css";
+import "@/utils/debugAuth"; // Utilidades de debug para autenticación
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -51,6 +53,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <AdminFloatingButton />
         <Toaster 
           position="top-right"
           richColors

@@ -4,7 +4,10 @@ export { api, apiClient, tokenUtils } from './apiClient';
 export type { ApiResponse } from './apiClient';
 export type { User, LoginData, RegisterData, VerifyEmailData, ResendCodeData } from './authService';
 
+// Servicios de usuario
+export { userService } from './userService';
+export type { UpdateUserProfileData, UpdateUserProfileResponse } from './userService';
+
 // Aquí puedes agregar más servicios en el futuro:
-// export { userService } from './userService';
 // export { propertyService } from './propertyService';
 // export { notificationService } from './notificationService'; 

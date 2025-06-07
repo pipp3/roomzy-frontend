@@ -94,10 +94,35 @@ export const resetPasswordSchema = z.object({
   path: ['confirmPassword'],
 });
 
+// Schema de validación para cambio de contraseña
+export const changePasswordSchema = z.object({
+  currentPassword: z
+    .string()
+    .min(1, 'La contraseña actual es requerida'),
+  
+  newPassword: z
+    .string()
+    .min(1, 'La nueva contraseña es requerida')
+    .min(8, 'La nueva contraseña debe tener al menos 8 caracteres')
+    .max(100, 'La nueva contraseña no puede exceder 100 caracteres')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'La nueva contraseña debe contener al menos una mayúscula, una minúscula y un número'),
+  
+  confirmPassword: z
+    .string()
+    .min(1, 'Confirma tu nueva contraseña'),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: 'Las contraseñas no coinciden',
+  path: ['confirmPassword'],
+}).refine((data) => data.currentPassword !== data.newPassword, {
+  message: 'La nueva contraseña debe ser diferente a la actual',
+  path: ['newPassword'],
+});
+
 // Tipos inferidos de los schemas
 export type RegisterFormData = z.infer<typeof registerSchema>;
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
+export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
 
 // Tipos para el usuario (basados en el modelo del backend)
 export interface User {
@@ -108,8 +133,8 @@ export interface User {
   region: string;
   city: string;
   phone: string;
-  bio?: string;
-  habits?: string;
+  bio: string;
+  habits: string;
   profilePhoto?: string;
   role: 'admin' | 'seeker' | 'host';
   isEmailVerified: boolean;

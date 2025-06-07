@@ -1,254 +1,296 @@
 'use client';
 
-import { useShallow } from 'zustand/react/shallow';
-import { useAuthStore } from '@/stores';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { adminService, UserStatsResponse } from '@/services/adminService';
+import { 
+  Users, 
+  UserCheck, 
+  UserX, 
+  TrendingUp,
+  AlertCircle,
+  Shield 
+} from 'lucide-react';
 
-const DashboardPage = () => {
-  // 🎯 Selectores optimizados
-  const user = useAuthStore((state) => state.user);
-  const { isAuthenticated } = useAuthStore(
-    useShallow((state) => ({
-      isAuthenticated: state.isAuthenticated,
-    }))
+interface StatsCardProps {
+  title: string;
+  value: number;
+  icon: React.ElementType;
+  description: string;
+  color: 'blue' | 'green' | 'yellow' | 'purple';
+}
+
+function StatsCard({ title, value, icon: Icon, description, color }: StatsCardProps) {
+  const colorClasses = {
+    blue: 'bg-blue-500 text-blue-100',
+    green: 'bg-emerald-500 text-emerald-100',
+    yellow: 'bg-yellow-500 text-yellow-100',
+    purple: 'bg-purple-500 text-purple-100'
+  };
+
+  const bgColorClasses = {
+    blue: 'bg-blue-50 border-blue-200',
+    green: 'bg-emerald-50 border-emerald-200',
+    yellow: 'bg-yellow-50 border-yellow-200',
+    purple: 'bg-purple-50 border-purple-200'
+  };
+
+  return (
+    <div className={`bg-white shadow-lg rounded-lg p-6 border ${bgColorClasses[color]} hover:shadow-xl transition-shadow duration-300`}>
+      <div className="flex items-center">
+        <div className={`p-3 rounded-full ${colorClasses[color]}`}>
+          <Icon className="h-6 w-6" />
+        </div>
+        <div className="ml-4">
+          <p className="text-sm font-medium text-slate-600">{title}</p>
+          <p className="text-2xl font-bold text-slate-900">{value.toLocaleString()}</p>
+          <p className="text-sm text-slate-500">{description}</p>
+        </div>
+      </div>
+    </div>
   );
+}
+
+function LoadingStats() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="bg-white shadow-lg rounded-lg p-6 border animate-pulse">
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-slate-200 w-12 h-12"></div>
+            <div className="ml-4 flex-1">
+              <div className="h-4 bg-slate-200 rounded w-3/4 mb-2"></div>
+              <div className="h-6 bg-slate-200 rounded w-1/2 mb-2"></div>
+              <div className="h-3 bg-slate-200 rounded w-2/3"></div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function DashboardPage() {
+  const router = useRouter();
+  const { canAccess } = useAdminAuth();
+  const [stats, setStats] = useState<UserStatsResponse['stats'] | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (canAccess) {
+      loadStats();
+    }
+  }, [canAccess]);
+
+  async function loadStats() {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await adminService.getUserStats();
+      
+      if (response.success && response.data) {
+        setStats(response.data.stats);
+      } else {
+        setError('No se pudieron cargar las estadísticas');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Error al cargar las estadísticas');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  // Mostrar página de acceso denegado si no es admin
+  if (!canAccess) {
+    return (
+      <ProtectedRoute requireEmailVerification={true}>
+        <DashboardLayout>
+          <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <div className="px-4 py-6 sm:px-0">
+              <div className="text-center">
+                <Shield className="mx-auto h-12 w-12 text-slate-400" />
+                <h3 className="mt-2 text-sm font-medium text-slate-900">Acceso Restringido</h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  No tienes permisos para acceder al panel de administración.
+                </p>
+              </div>
+            </div>
+          </div>
+        </DashboardLayout>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute requireEmailVerification={true}>
       <DashboardLayout>
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          {/* Header */}
           <div className="px-4 py-6 sm:px-0">
-            <div className="border-4 border-dashed border-slate-200 rounded-lg p-8">
-              <div className="text-center">
-                <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-emerald-100 mb-4">
-                  <svg
-                    className="h-8 w-8 text-emerald-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
+            {/* Header */}
+            <div className="text-center mb-8">
+              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-purple-100 mb-4">
+                <Shield className="h-8 w-8 text-purple-600" />
+              </div>
+              <h1 className="text-3xl font-bold text-slate-900 mb-2">
+                Panel de Administración
+              </h1>
+              <p className="text-lg text-slate-600">
+                Resumen general del sistema y estadísticas de usuarios
+              </p>
+            </div>
+
+            {/* Error State */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center mb-6">
+                <AlertCircle className="h-5 w-5 text-red-500 mr-3" />
+                <div className="flex-1">
+                  <p className="text-red-800">{error}</p>
+                  <button
+                    onClick={loadStats}
+                    className="mt-2 text-red-600 hover:text-red-800 text-sm font-medium"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                    />
-                  </svg>
+                    Intentar de nuevo
+                  </button>
                 </div>
-                
-                <h1 className="text-3xl font-bold text-slate-900 mb-2">
-                  ¡Bienvenido a Roomzy!
-                </h1>
-                
-                <p className="text-lg text-slate-600 mb-6">
-                  Tu plataforma para encontrar el hogar perfecto
-                </p>
+              </div>
+            )}
 
-                {user && (
-                  <div className="bg-white rounded-lg shadow-sm p-6 max-w-md mx-auto">
-                    <h2 className="text-xl font-semibold text-slate-900 mb-4">
-                      Información de tu cuenta
-                    </h2>
-                    
-                    <div className="space-y-3 text-left">
-                      <div className="flex justify-between">
-                        <span className="text-slate-600">Nombre:</span>
-                        <span className="font-medium text-slate-900">
-                          {user.name} {user.lastName}
-                        </span>
+            {/* Stats Cards */}
+            {isLoading ? (
+              <LoadingStats />
+            ) : stats ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <StatsCard
+                  title="Total de Usuarios"
+                  value={stats.totalUsers}
+                  icon={Users}
+                  description="Usuarios registrados"
+                  color="blue"
+                />
+                <StatsCard
+                  title="Usuarios Verificados"
+                  value={stats.verifiedUsers}
+                  icon={UserCheck}
+                  description="Emails verificados"
+                  color="green"
+                />
+                <StatsCard
+                  title="Sin Verificar"
+                  value={stats.unverifiedUsers}
+                  icon={UserX}
+                  description="Pendientes verificación"
+                  color="yellow"
+                />
+                <StatsCard
+                  title="Administradores"
+                  value={stats.usersByRole.admin}
+                  icon={TrendingUp}
+                  description="Usuarios admin"
+                  color="purple"
+                />
+              </div>
+            ) : null}
+
+            {/* Detailed Stats */}
+            {stats && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                {/* Users by Role */}
+                <div className="bg-white shadow-lg rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-slate-900 mb-4">
+                    Usuarios por Rol
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-600">Buscadores (Seekers)</span>
+                      <span className="font-semibold text-slate-900">
+                        {stats.usersByRole.seeker.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-600">Anfitriones (Hosts)</span>
+                      <span className="font-semibold text-slate-900">
+                        {stats.usersByRole.host.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-600">Administradores</span>
+                      <span className="font-semibold text-slate-900">
+                        {stats.usersByRole.admin.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Verification Status */}
+                <div className="bg-white shadow-lg rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-slate-900 mb-4">
+                    Estado de Verificación
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <UserCheck className="h-5 w-5 text-green-500 mr-2" />
+                        <span className="text-slate-600">Verificados</span>
                       </div>
-                      
-                      <div className="flex justify-between">
-                        <span className="text-slate-600">Email:</span>
-                        <span className="font-medium text-slate-900">{user.email}</span>
+                      <span className="font-semibold text-slate-900">
+                        {stats.verifiedUsers.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <UserX className="h-5 w-5 text-yellow-500 mr-2" />
+                        <span className="text-slate-600">Sin verificar</span>
                       </div>
-                      
-                      <div className="flex justify-between">
-                        <span className="text-slate-600">Ubicación:</span>
-                        <span className="font-medium text-slate-900">
-                          {user.city}, {user.region}
-                        </span>
-                      </div>
-                      
-                      <div className="flex justify-between">
-                        <span className="text-slate-600">Teléfono:</span>
-                        <span className="font-medium text-slate-900">{user.phone}</span>
-                      </div>
-                      
-                      <div className="flex justify-between">
-                        <span className="text-slate-600">Rol:</span>
-                        <span className="font-medium text-slate-900 capitalize">
-                          {user.role === 'seeker' ? 'Buscador' : 'Arrendador'}
-                        </span>
-                      </div>
-                      
-                      <div className="flex justify-between">
-                        <span className="text-slate-600">Estado:</span>
-                        <span className={`font-medium ${
-                          user.isEmailVerified ? 'text-green-600' : 'text-yellow-600'
-                        }`}>
-                          {user.isEmailVerified ? '✓ Verificado' : '⚠ Sin verificar'}
+                      <span className="font-semibold text-slate-900">
+                        {stats.unverifiedUsers.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="pt-2 border-t">
+                      <div className="text-sm text-slate-500">
+                        Tasa de verificación:{' '}
+                        <span className="font-medium text-slate-700">
+                          {((stats.verifiedUsers / stats.totalUsers) * 100).toFixed(1)}%
                         </span>
                       </div>
                     </div>
                   </div>
-                )}
+                </div>
+              </div>
+            )}
+
+            {/* Quick Actions */}
+            <div className="bg-white shadow-lg rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">
+                Acciones Rápidas
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button 
+                  onClick={() => router.push('/dashboard/admin/usuarios')}
+                  className="p-4 border cursor-pointer border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-left hover:shadow-md"
+                >
+                  <Users className="h-6 w-6 text-blue-500 mb-2" />
+                  <h4 className="font-medium text-slate-900">Gestionar Usuarios</h4>
+                  <p className="text-sm text-slate-600">Ver, crear y editar usuarios</p>
+                </button>
+                <button className="p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-left hover:shadow-md opacity-50 cursor-not-allowed">
+                  <UserCheck className="h-6 w-6 text-green-500 mb-2" />
+                  <h4 className="font-medium text-slate-900">Verificaciones</h4>
+                  <p className="text-sm text-slate-600">Próximamente disponible</p>
+                </button>
+                <button className="p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-left hover:shadow-md opacity-50 cursor-not-allowed">
+                  <TrendingUp className="h-6 w-6 text-purple-500 mb-2" />
+                  <h4 className="font-medium text-slate-900">Reportes</h4>
+                  <p className="text-sm text-slate-600">Próximamente disponible</p>
+                </button>
               </div>
             </div>
           </div>
-
-          {/* Contenido adicional */}
-          <div className="px-4 py-6 sm:px-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Card 1 */}
-              <div className="bg-white overflow-hidden shadow rounded-lg">
-                <div className="p-6">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <svg
-                        className="h-8 w-8 text-emerald-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                        />
-                      </svg>
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="text-lg font-medium text-slate-900">
-                        Buscar Propiedades
-                      </h3>
-                      <p className="text-sm text-slate-500">
-                        Encuentra tu hogar ideal
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-slate-50 px-6 py-3">
-                  <button className="text-sm font-medium text-emerald-600 hover:text-emerald-700">
-                    Próximamente →
-                  </button>
-                </div>
-              </div>
-
-              {/* Card 2 */}
-              <div className="bg-white overflow-hidden shadow rounded-lg">
-                <div className="p-6">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <svg
-                        className="h-8 w-8 text-emerald-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                        />
-                      </svg>
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="text-lg font-medium text-slate-900">
-                        Publicar Propiedad
-                      </h3>
-                      <p className="text-sm text-slate-500">
-                        Comparte tu espacio
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-slate-50 px-6 py-3">
-                  <button className="text-sm font-medium text-emerald-600 hover:text-emerald-700">
-                    Próximamente →
-                  </button>
-                </div>
-              </div>
-
-              {/* Card 3 */}
-              <div className="bg-white overflow-hidden shadow rounded-lg">
-                <div className="p-6">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <svg
-                        className="h-8 w-8 text-emerald-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                        />
-                      </svg>
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="text-lg font-medium text-slate-900">
-                        Mi Perfil
-                      </h3>
-                      <p className="text-sm text-slate-500">
-                        Gestiona tu cuenta
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-slate-50 px-6 py-3">
-                  <button className="text-sm font-medium text-emerald-600 hover:text-emerald-700">
-                    Próximamente →
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Información de desarrollo */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="px-4 py-6 sm:px-0">
-              <div className="bg-blue-50 rounded-lg border border-blue-200 p-6">
-                <h4 className="text-lg font-semibold text-blue-800 mb-4">
-                  🚀 Estado de Desarrollo
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-700">
-                  <div>
-                    <p className="font-medium mb-2">Autenticación:</p>
-                    <ul className="space-y-1">
-                      <li>• ✅ Registro de usuarios</li>
-                      <li>• ✅ Login con JWT</li>
-                      <li>• ✅ Verificación de email</li>
-                      <li>• ✅ Refresh tokens</li>
-                      <li>• ✅ Rutas protegidas</li>
-                    </ul>
-                  </div>
-                  <div>
-                    <p className="font-medium mb-2">Próximas funcionalidades:</p>
-                    <ul className="space-y-1">
-                      <li>• 🔄 Gestión de propiedades</li>
-                      <li>• 🔄 Sistema de búsqueda</li>
-                      <li>• 🔄 Mensajería</li>
-                      <li>• 🔄 Favoritos</li>
-                      <li>• 🔄 Perfil de usuario</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </DashboardLayout>
     </ProtectedRoute>
   );
-};
-
-export default DashboardPage; 
+} 

@@ -11,6 +11,8 @@ export interface User {
   region: string;
   city: string;
   phone: string;
+  bio: string;
+  habits: string;
   role: string;
   isEmailVerified: boolean;
   createdAt: string;

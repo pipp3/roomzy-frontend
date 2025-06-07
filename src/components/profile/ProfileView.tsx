@@ -1,14 +1,16 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthUser, useAuthStatus, useAuthActions } from '@/stores/authStore';
-import { User, Mail, Phone, MapPin, Calendar, Shield, CheckCircle, XCircle } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, Shield, CheckCircle, XCircle, FileText, Users } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 
 export default function ProfileView() {
   const user = useAuthUser();
   const { isAuthenticated, isLoading } = useAuthStatus();
   const { refreshUser } = useAuthActions();
+  const router = useRouter();
 
   // Refrescar datos del usuario al montar el componente
   useEffect(() => {
@@ -16,6 +18,13 @@ export default function ProfileView() {
       refreshUser();
     }
   }, [isAuthenticated, user, refreshUser]);
+
+  const handleEditProfile = () => {
+    router.push('/profile/edit');
+  };
+  const handleChangePassword = () => {
+    router.push('/profile/change-password');
+  };
 
   if (isLoading) {
     return (
@@ -80,7 +89,7 @@ export default function ProfileView() {
         {/* Header */}
         <div className="px-4 py-6 sm:px-0">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-slate-900">Mi Perfil</h1>
+            <h1 className="text-3xl font-bold text-emerald-600">Mi Perfil</h1>
             <p className="mt-2 text-slate-600">
               Gestiona tu información personal y configuración de cuenta
             </p>
@@ -197,13 +206,61 @@ export default function ProfileView() {
                 </div>
               </div>
 
+              {/* Biografía y Hábitos */}
+              <div className="mt-8 space-y-6">
+                {/* Biografía */}
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-4">
+                    <FileText className="h-5 w-5 inline mr-2" />
+                    Biografía
+                  </h3>
+                  {user.bio ? (
+                    <div className="bg-slate-50 rounded-lg p-4">
+                      <p className="text-slate-700 leading-relaxed">{user.bio}</p>
+                    </div>
+                  ) : (
+                    <div className="bg-slate-50 rounded-lg p-4 text-center">
+                      <p className="text-slate-500 italic">
+                        No has agregado una biografía aún. 
+                        <span className="text-emerald-600 font-medium"> Agrégala para que otros usuarios puedan conocerte mejor.</span>
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Hábitos */}
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-4">
+                    <Users className="h-5 w-5 inline mr-2" />
+                    Hábitos y Estilo de Vida
+                  </h3>
+                  {user.habits ? (
+                    <div className="bg-slate-50 rounded-lg p-4">
+                      <p className="text-slate-700 leading-relaxed">{user.habits}</p>
+                    </div>
+                  ) : (
+                    <div className="bg-slate-50 rounded-lg p-4 text-center">
+                      <p className="text-slate-500 italic">
+                        No has especificado tus hábitos aún. 
+                        <span className="text-emerald-600 font-medium"> Es importante para la compatibilidad con futuros compañeros.</span>
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Botones de acción */}
               <div className="mt-8 pt-6 border-t border-slate-200">
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <button className="flex-1 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors font-medium">
+                  <button 
+                    onClick={handleEditProfile}
+                    className="flex-1 bg-emerald-600 cursor-pointer text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+                  >
                     Editar Perfil
                   </button>
-                  <button className="flex-1 bg-slate-100 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-200 transition-colors font-medium">
+                  <button
+                  onClick={handleChangePassword}
+                  className="flex-1 bg-slate-100 cursor-pointer text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-200 transition-colors font-medium">
                     Cambiar Contraseña
                   </button>
                   {!user.isEmailVerified && (

@@ -1,5 +1,3 @@
-'use client';
-
 import { forwardRef } from 'react';
 import { REGIONS_AND_CITIES, REGIONS } from '@/constants/locations';
 import { getSelectClasses } from '@/utils/form';

@@ -1,6 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthActions, useAuthLoadingStates, useAuthError } from '@/stores/authStore';
@@ -19,27 +22,43 @@ import {
 } from '@/components';
 import { getInputClasses } from '@/utils/form';
 
+// Schema de validación con Zod
+const forgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'El email es requerido')
+    .email('El formato del email no es válido')
+    .toLowerCase()
+    .trim(),
+});
+
+type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
+
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const { forgotPassword } = useAuthActions();
   const { isForgotPasswordLoading } = useAuthLoadingStates();
   const error = useAuthError();
 
-  const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    getValues,
+  } = useForm<ForgotPasswordFormData>({
+    resolver: zodResolver(forgotPasswordSchema),
+    mode: 'onChange',
+  });
 
-    if (!email.trim()) {
-      toast.error('Por favor ingresa tu email');
-      return;
-    }
-
+  const onSubmit = async (data: ForgotPasswordFormData) => {
     try {
-      const result = await forgotPassword({ email: email.trim() });
+      const result = await forgotPassword({ email: data.email });
       
       if (result.success) {
+        setSubmittedEmail(data.email);
         setIsSubmitted(true);
         toast.success(result.message);
       } else {
@@ -70,7 +89,7 @@ export default function ForgotPasswordPage() {
           <LoadingButton
             type="button"
             isLoading={false}
-            onClick={() => router.push(`/reset-password?email=${encodeURIComponent(email)}`)}
+            onClick={() => router.push(`/reset-password?email=${encodeURIComponent(submittedEmail)}`)}
             variant="custom"
             className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl text-sm font-medium text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-200 shadow-lg hover:shadow-xl"
           >
@@ -116,21 +135,19 @@ export default function ForgotPasswordPage() {
       <ErrorAlert error={error} />
 
       {/* Formulario */}
-      <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
         <FormField
           label="Correo electrónico"
           htmlFor="email"
+          error={errors.email?.message}
           required
         >
           <input
             id="email"
-            name="email"
             type="email"
             autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className={getInputClasses(false)}
+            {...register('email')}
+            className={getInputClasses(!!errors.email)}
             placeholder="tu@email.com"
             disabled={isForgotPasswordLoading}
           />

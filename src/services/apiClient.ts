@@ -95,6 +95,9 @@ export const api = {
   put: <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<ApiResponse<T>>> =>
     apiClient.put(url, data, config),
 
+  patch: <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<ApiResponse<T>>> =>
+    apiClient.patch(url, data, config),
+
   delete: <T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<ApiResponse<T>>> =>
     apiClient.delete(url, config),
 };

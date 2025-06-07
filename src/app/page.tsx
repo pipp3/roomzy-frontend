@@ -34,7 +34,7 @@ export default function Home() {
       // Después de verificar, redirigir según el estado
       if (!isLoading) {
         if (isAuthenticated) {
-          router.push('/dashboard');
+          router.push('/inicio');
         } else {
           router.push('/login');
         }

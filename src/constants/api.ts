@@ -19,4 +19,9 @@ export const API_ENDPOINTS = {
   USERS: {
     PROFILE: '/users/profile',
   },
+  ADMIN: {
+    USERS: '/admin/users',
+    USER_BY_ID: (id: number) => `/admin/users/${id}`,
+    USER_STATS: '/admin/users/stats',
+  },
 } as const; 

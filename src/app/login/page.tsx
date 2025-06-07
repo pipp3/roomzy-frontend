@@ -75,11 +75,17 @@ const LoginPage = () => {
   }, [searchParams]);
 
   // Redirigir si ya está autenticado
+  const user = useAuthStore((state) => state.user);
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/dashboard');
+    if (isAuthenticated && user) {
+      // Redirigir a admin dashboard si es admin, sino al dashboard normal
+      if (user.role === 'admin') {
+        router.push('/dashboard');
+      } else {
+        router.push('/inicio');
+      }
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, user, router]);
 
   const onSubmit = async (data: LoginFormData) => {
     try {
@@ -94,10 +100,19 @@ const LoginPage = () => {
           });
           router.push('/verify-email');
         } else {
+          // Obtener el usuario actualizado del store para determinar redirección
+          const currentUser = useAuthStore.getState().user;
+          
           toast.success('¡Bienvenido de vuelta!', {
             description: 'Has iniciado sesión exitosamente.',
           });
-          router.push('/dashboard');
+          
+          // Redirigir según el rol del usuario
+          if (currentUser?.role === 'admin') {
+            router.push('/dashboard');
+          } else {
+            router.push('/inicio');
+          }
         }
         reset();
       } else {

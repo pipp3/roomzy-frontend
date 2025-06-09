@@ -13,6 +13,7 @@ export interface User {
   phone: string;
   bio: string;
   habits: string;
+  profilePhoto?: string;
   role: string;
   isEmailVerified: boolean;
   createdAt: string;

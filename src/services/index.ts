@@ -6,7 +6,7 @@ export type { User, LoginData, RegisterData, VerifyEmailData, ResendCodeData } f
 
 // Servicios de usuario
 export { userService } from './userService';
-export type { UpdateUserProfileData, UpdateUserProfileResponse } from './userService';
+export type { UpdateUserProfileData, UpdateUserProfileResponse, UpdateProfilePhotoResponse } from './userService';
 
 // Aquí puedes agregar más servicios en el futuro:
 // export { propertyService } from './propertyService';

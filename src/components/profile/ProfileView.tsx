@@ -1,16 +1,19 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthUser, useAuthStatus, useAuthActions } from '@/stores/authStore';
-import { User, Mail, Phone, MapPin, Calendar, Shield, CheckCircle, XCircle, FileText, Users } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, Shield, CheckCircle, XCircle, FileText, Users, Camera } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import Avatar from '@/components/ui/Avatar';
+import ProfilePhotoModal from '@/components/profile/ProfilePhotoModal';
 
 export default function ProfileView() {
   const user = useAuthUser();
   const { isAuthenticated, isLoading } = useAuthStatus();
   const { refreshUser } = useAuthActions();
   const router = useRouter();
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
 
   // Refrescar datos del usuario al montar el componente
   useEffect(() => {
@@ -24,6 +27,14 @@ export default function ProfileView() {
   };
   const handleChangePassword = () => {
     router.push('/profile/change-password');
+  };
+
+  const handleOpenPhotoModal = () => {
+    setIsPhotoModalOpen(true);
+  };
+
+  const handleClosePhotoModal = () => {
+    setIsPhotoModalOpen(false);
   };
 
   if (isLoading) {
@@ -100,10 +111,24 @@ export default function ProfileView() {
             {/* Header de la tarjeta con foto de perfil */}
             <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 px-6 py-8">
               <div className="flex items-center space-x-6">
-                <div className="flex-shrink-0">
-                  <div className="h-24 w-24 rounded-full border-4 border-white shadow-lg bg-white flex items-center justify-center">
-                    <User className="h-12 w-12 text-slate-400" />
-                  </div>
+                <div className="flex-shrink-0 relative">
+                  <Avatar
+                    profilePhoto={user.profilePhoto}
+                    name={user.name}
+                    className="border-4 border-white"
+                    lastName={user.lastName}
+                    size="xl"
+                    showBorder={true}
+                    onClick={handleOpenPhotoModal}
+                  />
+                  {/* Botón para cambiar foto */}
+                  <button
+                    onClick={handleOpenPhotoModal}
+                    className="absolute -bottom-2 -right-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full p-2 shadow-lg transition-colors group"
+                    title="Cambiar foto de perfil"
+                  >
+                    <Camera className="h-4 w-4 cursor-pointer" />
+                  </button>
                 </div>
                 <div className="flex-1">
                   <h2 className="text-2xl font-bold text-white">
@@ -304,6 +329,15 @@ export default function ProfileView() {
           </div>
         </div>
       </div>
+
+      {/* Modal para actualizar foto de perfil */}
+      <ProfilePhotoModal
+        isOpen={isPhotoModalOpen}
+        onClose={handleClosePhotoModal}
+        currentPhoto={user.profilePhoto}
+        userName={user.name}
+        userLastName={user.lastName}
+      />
     </DashboardLayout>
   );
 } 

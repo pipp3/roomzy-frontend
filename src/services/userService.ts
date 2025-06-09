@@ -21,6 +21,17 @@ export interface UpdateUserProfileResponse {
   }>;
 }
 
+export interface UpdateProfilePhotoResponse {
+  success: boolean;
+  message: string;
+  user: User;
+  uploadInfo?: {
+    width: number;
+    height: number;
+    format: string;
+  };
+}
+
 export const userService = {
   /**
    * Obtener perfil de usuario por ID
@@ -61,6 +72,43 @@ export const userService = {
         error.response?.data?.message || 
         error.message || 
         'Error al actualizar perfil'
+      );
+    }
+  },
+
+  /**
+   * Actualizar foto de perfil
+   */
+  updateProfilePhoto: async (file: File): Promise<UpdateProfilePhotoResponse> => {
+    try {
+      const formData = new FormData();
+      formData.append('profilePhoto', file);
+
+      const response = await api.patch(
+        '/users/profile/photo',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      if (!response.data.success || !response.data.user) {
+        throw new Error(response.data.message || 'Error al actualizar foto de perfil');
+      }
+
+      return {
+        success: response.data.success,
+        message: response.data.message,
+        user: response.data.user,
+        uploadInfo: (response.data as any).uploadInfo
+      };
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || 
+        error.message || 
+        'Error al actualizar foto de perfil'
       );
     }
   },

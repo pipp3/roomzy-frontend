@@ -19,6 +19,10 @@ export { default as Navbar } from './layout/Navbar';
 
 // Profile Components
 export { default as ProfileView } from './profile/ProfileView';
+export { default as ProfilePhotoModal } from './profile/ProfilePhotoModal';
+
+// UI Components
+export { default as Avatar } from './ui/Avatar';
 
 // Icons
 export * from './icons/AuthIcons'; 
